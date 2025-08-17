@@ -3,13 +3,14 @@ import random
 import os
 from typing import List
 from mcp.server.fastmcp import FastMCP
+from custom_logger import logger
 
 DB_DIRECTORY = "local_db"
 
-print(f"Starting MCP server for with DB_DIRECTORY: {DB_DIRECTORY}")
+logger.info(f"Starting MCP Food Server. Using DB_DIRECTORY: {DB_DIRECTORY}")
 
 # Initialize FastMCP server
-mcp = FastMCP("ai-engineering")
+mcp = FastMCP("food-server")
 
 @mcp.tool()
 def help() -> str:
@@ -35,7 +36,7 @@ def get_meal_options(calorie_limit: int, protein_goal: int, num_options: int = 3
         data = json.load(f)
 
     if not data:
-        print(f"Error reading json database file from: {json_file_path}")
+        logger.error(f"Error reading json database file from: {json_file_path}")
         return ["Error reading json database file."]
 
     candidates = [
@@ -78,5 +79,5 @@ def get_image_for_meal(meal_name: str) -> bytes:
 # If this file is imported as a module, the server will not start automatically 
 # (i.e. this code will not be executed).
 if __name__ == "__main__":
-    # Initialize and run the server
+    # Initialize and run the server using local transport
     mcp.run(transport='stdio')

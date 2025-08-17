@@ -3,9 +3,9 @@ import uuid, time
 from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
-#from agent import run_agent  # import your AutoGen runner
-
-app = FastAPI()
+from agentic_nutrition_chatbot import AgentManager
+from contextlib import asynccontextmanager
+from custom_logger import logger
 
 class ChatMessage(BaseModel):
     role: str
@@ -15,6 +15,19 @@ class ChatRequest(BaseModel):
     model: str
     messages: list[ChatMessage]
     temperature: float = 0.7
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup code here
+    app.state.agent_manager = await AgentManager.async_init()
+    logger.info("🚀 Agent initialized and ready.")
+
+    yield
+    # Shutdown logic
+    logger.info("🛑 Agent service shutting down...")
+    #sessions.clear()
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/v1/models")
 async def list_models():
@@ -37,7 +50,8 @@ async def list_models():
 async def chat_completions(request: ChatRequest):
     # Get the last user message from messages list
     user_input = next((m.content for m in reversed(request.messages) if m.role == "user"), "")
-    
+    agent_manager = app.state.agent_manager
+    #reply = agent_manager.process_message(user_input)  # This may need to be async if your agent is async
     reply = "Walla Yofi" #run_agent(user_input)
 
     return {
@@ -58,4 +72,5 @@ async def chat_completions(request: ChatRequest):
     }
 
 if __name__ == "__main__":
+    #logger = setup_colored_logging()
     uvicorn.run(app, host="0.0.0.0", port=8000)

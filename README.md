@@ -89,9 +89,9 @@ It exposes the different tools (like meal-options) and used by the agentic syste
 
 ## Check mcp server using inspector tool (Optional)
 1. Run the following command from command line (make sure you are in the correct path)
-`>npx @modelcontextprotocol/inspector uv run --active mcp-server.py`
+`>npx @modelcontextprotocol/inspector python3 mcp-food-server.py`
 2. The browser should open automatically, navigating to a localhost mcp inspector service
-3. Make sure the 'Transport Type' is _STDIO_ and Command is _uv_ and click 'Connect' to connect the server 
+3. Make sure the 'Transport Type' is _STDIO_ and Command is _python3_ and click 'Connect' to connect the server 
 4. If all is good, you can click the 'Tools' icon on the top barto see the tools exposed by our mcp server
 5. Make sure to properly shut down the server when done with `CTRL+C` from command line
 
