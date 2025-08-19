@@ -12,9 +12,9 @@ asttokens==3.0.0
 async-lru==2.0.5
 attrs==25.3.0
 audioop-lts==0.2.2
-autogen-agentchat==0.7.2
-autogen-core==0.7.2
-autogen-ext==0.7.2
+autogen-agentchat==0.7.3
+autogen-core==0.7.3
+autogen-ext==0.7.3
 babel==2.17.0
 beautifulsoup4==4.13.4
 bleach==6.2.0
