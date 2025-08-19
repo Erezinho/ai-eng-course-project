@@ -6,7 +6,7 @@ AI Engineering course of The hebrew University of Jerusalem - final project
 Assuming you completed all the steps below, have all required packacges etc, to strat the project:
 1. Run Docker Desktop, start 'open-webui' container (if not already running) 
 2. Run Ollama (if not already running)
-3. Start the wrapper-service.py from command line
+3. Start the wrapper_service.py from command line
 4. Navigate to http://localhost:8080/ and start chatting
 
 
@@ -28,7 +28,7 @@ This local service allows Open WebUI / Ollama UI to communicate with the agentic
 It follows OpenAI's API schema
 
 ## Start the local service
-`> python3 wrapper-service.py`
+`> python3 wrapper_service.py`
 
 You may start it also from Visual Studio Code (allows also debugging)
 
@@ -70,9 +70,8 @@ http://localhost:8080/
 ## Config Open WebUI to be familiar with our Wrapper Service 
 1. Navigate to http://localhost:8080/ 
 2. Go to 'User' (left bottom corner)
-3. Click 'Settings'
-4. Click 'Admin Settings'
-5. Select 'Connection'
+3. [Old version] Click 'Settings' -> Click 'Admin Settings' -> Select 'Connection'
+4. [New Version] Click 'Admin Panel' -> Click 'Settings' -> Select 'Connection'
 6. Click the '+' on the right line of 'OpenAI API'
 7. Add 'http://host.docker.internal:8000/v1'
 8. Test the connection by clicking the small refersh button on the right.
@@ -89,7 +88,7 @@ It exposes the different tools (like meal-options) and used by the agentic syste
 
 ## Check mcp server using inspector tool (Optional)
 1. Run the following command from command line (make sure you are in the correct path)
-`>npx @modelcontextprotocol/inspector python3 mcp-food-server.py`
+`>npx @modelcontextprotocol/inspector python3 mcp_food_server.py`
 2. The browser should open automatically, navigating to a localhost mcp inspector service
 3. Make sure the 'Transport Type' is _STDIO_ and Command is _python3_ and click 'Connect' to connect the server 
 4. If all is good, you can click the 'Tools' icon on the top barto see the tools exposed by our mcp server

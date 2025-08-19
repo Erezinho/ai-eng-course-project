@@ -53,18 +53,21 @@ class ColoredFormatter(logging.Formatter):
 # Example usage and setup
 def setup_colored_logging():
     """Setup logging with colored formatter"""
-    
+    log_level = logging.INFO
+
     # Create logger
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO) #logging.DEBUG Change the desired log level here
-    
+    # Set the log level the logger emits to all handlers
+    logger.setLevel(log_level) #logging.WARNING #logging.DEBUG Change the desired log level here
+
     # Remove existing handlers to avoid duplicates
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
     
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG)
+    # Control the log level for the console handler (the most restrictive level between the logger and the handler wins).
+    console_handler.setLevel(log_level)
     
     # Create and set custom formatter
     formatter = ColoredFormatter()

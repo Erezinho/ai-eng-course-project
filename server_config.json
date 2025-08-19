@@ -2,9 +2,9 @@
     "mcpServers": {
         "food": {
             "command": "python3",
-            "args": ["mcp-food-server.py"],
+            "args": ["mcp_food_server.py"],
             "__command": "uv",
-            "__args": ["run", "--active", "mcp-food-server.py"],
+            "__args": ["run", "--active", "mcp_food_server.py"],
             "agentName": "FoodAssistant",
             "agentDescription": "Your name is FoodAssistant. You are a helpful assistant that can work with the mcp food server. You must use the provided tools in order to work with the food server. Inform the user about the tool you have used to answer a question or get data."
         }        
