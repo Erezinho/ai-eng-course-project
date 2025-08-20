@@ -3,6 +3,7 @@
 import asyncio
 from email.mime import message
 import json
+from urllib import response
 #from dotenv import load_dotenv
 #from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.base import TaskResult
@@ -16,6 +17,7 @@ from autogen_agentchat.conditions import TextMentionTermination
 from autogen_agentchat.teams import RoundRobinGroupChat 
 from autogen_ext.tools.mcp import StdioServerParams, mcp_server_tools
 from autogen_agentchat.ui import Console 
+from markdown_streamer import MarkdownStreamer
 from custom_logger import logger
 from enum import Enum
 
@@ -29,6 +31,8 @@ class AgentManager:
         if mcp_tools is None:
             raise TypeError("mcp_tools is a required argument")
 
+        self.markdown_streamer = MarkdownStreamer()
+        
         self.model_client = self.create_model_client(model)
         logger.info(f"Using model client: {self.model_client.__class__.__name__}")
 
@@ -134,17 +138,61 @@ class AgentManager:
         """
         try:
             # Get the response from your AutoGen system
-            response = await self.process_message(message)
-            response_text = response.messages[-1].content if response.messages else "No response"
+            #response = await self.process_message(message)
+            #response_text = response.messages[-1].content if response.messages else "No response"
+
+            # Try 0: Simulate streaming by yielding chunks of entire response, regardless of inner structure
+            # words = response_text.split()
+            # for i, word in enumerate(words):
+            #     chunk_content = word + " " if i < len(words) - 1 else word
+            #     yield chunk_content
+            #     await asyncio.sleep(0.05)  # Small delay for streaming effect
+             
+
+            # Try 1: skipping markdown splitting
+            # paragraphs = response_text.split('\n\n')
             
-            # Simulate streaming by yielding chunks
-            # Replace this with actual streaming from your AutoGen system if supported
-            words = response_text.split()
-            for i, word in enumerate(words):
-                chunk_content = word + " " if i < len(words) - 1 else word
-                yield chunk_content
-                await asyncio.sleep(0.05)  # Small delay for streaming effect
+            # for para in paragraphs:
+            #     if not para.strip():
+            #         continue
+                    
+            #     # Send complete paragraphs for better Markdown rendering
+            #     if (para.startswith('```') or para.startswith('#') or 
+            #         para.startswith('- ') or para.startswith('* ') or
+            #         para.startswith('> ')):
+            #         # Send Markdown blocks as complete units
+            #         yield para + '\n\n'
+            #         await asyncio.sleep(0.3)
+            #     else:
+            #         # Regular text - can split by sentences
+            #         sentences = para.split('. ')
+            #         for i, sentence in enumerate(sentences):
+            #             if i < len(sentences) - 1:
+            #                 yield sentence + '. '
+            #             else:
+            #                 yield sentence + '\n\n'
+            #             await asyncio.sleep(0.2)
+
+            # Try 2: Using the Markdown streamer
+            # Simulate your AutoGen system generating content
+            async def autogen_generator():
+                response = await self.process_message(message)
+                response_text = response.messages[-1].content if response.messages else "No response"
+
+                #full_response = await self.process_message(messages, model)
                 
+                # Break into chunks for streaming simulation
+                chunks = self.markdown_streamer.detect_markdown_boundaries(response_text)
+                
+                for chunk in chunks:
+                    # Simulate processing delay
+                    await asyncio.sleep(0.2)
+                    yield chunk + "\n\n"
+            
+            # Stream with markdown awareness
+            async for chunk in self.markdown_streamer.stream_with_markdown_awareness(autogen_generator()):
+                yield chunk
+                    
         except Exception as e:
             logger.error(f"Error in streaming: {e}")
             yield f"Error: {str(e)}"
