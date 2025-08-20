@@ -9,6 +9,7 @@ from datetime import datetime
 import asyncio
 from custom_logger import logging
 from agentic_nutrition_chatbot import AgentManager
+from agentic_nutrition_chatbot import ModelName
 
 app = FastAPI(title="AutoGen API Bridge", version="1.0.0")
 
@@ -48,83 +49,15 @@ class ChatCompletionChunk(BaseModel):
     model: str
     choices: List[Dict[str, Any]]
 
-# Your AutoGen system wrapper Dummy
-# class AutoGenWrapperDummy:
-#     def __init__(self):
-#         # Initialize your AutoGen system here
-#         # self.agent_system = YourAgentSystem()
-#         pass
-    
-#     async def process_message(self, messages: List[Message]) -> str:
-#         """
-#         Process messages through your AutoGen system
-#         Convert OpenAI format to your system's format and back
-#         """
-#         try:
-#             # Extract the latest user message
-#             user_message = messages[-1].content if messages else ""
-            
-#             # Convert message history to your AutoGen system format
-#             conversation_history = []
-#             for msg in messages[:-1]:  # All except the last message
-#                 conversation_history.append({
-#                     "role": msg.role,
-#                     "content": msg.content
-#                 })
-            
-#             # TODO: Replace this with your actual AutoGen system call
-#             # Example:
-#             # response = await self.agent_system.process(
-#             #     message=user_message,
-#             #     history=conversation_history,
-#             #     model=model
-#             # )
-            
-#             # Placeholder response - replace with your AutoGen system
-#             response = f"AutoGen processed: {user_message}"
-            
-#             return response
-            
-#         except Exception as e:
-#             logging.error(f"Error processing message: {e}")
-#             raise HTTPException(status_code=500, detail=str(e))
-
-#     async def process_message_stream(self, messages: List[Message]):
-#         """
-#         Process messages through your AutoGen system with streaming
-#         """
-#         try:
-#             # Get the response from your AutoGen system
-#             response = await self.process_message(messages)
-            
-#             # Simulate streaming by yielding chunks
-#             # Replace this with actual streaming from your AutoGen system if supported
-#             words = response.split()
-#             for i, word in enumerate(words):
-#                 chunk_content = word + " " if i < len(words) - 1 else word
-#                 yield chunk_content
-#                 await asyncio.sleep(0.05)  # Small delay for streaming effect
-                
-#         except Exception as e:
-#             logging.error(f"Error in streaming: {e}")
-#             yield f"Error: {str(e)}"
-
-###########################################################################
-
-# Initialize the wrapper
-#use_dummy = False
-autogen_wrapper = None  # Global variable to hold the instance
+# Initialize the wrappers - simple, 2 globals... should be in some repository
+autogen_wrappers = {}  # Global variable to hold the instance
 
 async def init_wrapper():
-    global autogen_wrapper
-    autogen_wrapper = await AgentManager.async_init()
-
-# if use_dummy:
-#     autogen_wrapper = AutoGenWrapperDummy()
-# else:
-#     # Run the async initialization before the app starts
-#     asyncio.run(init_wrapper())
-
+    global autogen_wrappers
+    autogen_wrappers = {
+        ModelName.GPT_OSS_20B.value: await AgentManager.async_init(model=ModelName.GPT_OSS_20B),
+        ModelName.QWEN3_30B_A3B.value: await AgentManager.async_init(model=ModelName.QWEN3_30B_A3B),
+    }
 asyncio.run(init_wrapper())
 
 ###########################################################################
@@ -133,6 +66,10 @@ asyncio.run(init_wrapper())
 async def root():
     return {"message": "AutoGen API Bridge is running"}
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
 @app.get("/v1/models")
 async def list_models():
     """OpenAI-compatible models endpoint"""
@@ -140,7 +77,19 @@ async def list_models():
         "object": "list",
         "data": [
             {
-                "id": "autogen-system",
+                "id": f"{ModelName.GPT_OSS_20B.value}",
+                "object": "model",
+                "created": int(time.time()),
+                "owned_by": "autogen"
+            },
+            # {
+            #     "id": f"{ModelName.QWEN3_30B.value}",
+            #     "object": "model",
+            #     "created": int(time.time()),
+            #     "owned_by": "autogen"
+            # },
+            {
+                "id": f"{ModelName.QWEN3_30B_A3B.value}",
                 "object": "model",
                 "created": int(time.time()),
                 "owned_by": "autogen"
@@ -151,17 +100,24 @@ async def list_models():
 @app.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest):
     """OpenAI-compatible chat completions endpoint"""
-    
+
+    # TODO - Reset the team when new Chat starts (according to the length of the history)
+
     # Add logging for debugging
     logging.info(f"Received request: stream={request.stream}, model={request.model}")
     logging.info(f"Messages: {[msg for msg in request.messages]}")
     
+    # Set active model
+    agent_wrapper = autogen_wrappers.get(request.model)
+    if not agent_wrapper:
+        raise HTTPException(status_code=400, detail=f"Model {request.model} not supported")
+
     if request.stream:
-        return await stream_chat_completions(request)
+        return await stream_chat_completions(agent_wrapper, request)
 
     try:
         # Process through AutoGen
-        response_content = await autogen_wrapper.process_message(request.messages[-1].content)
+        response_content = await agent_wrapper.process_message(request.messages[-1].content)
 
         logging.info(f"Generated response: {response_content}")
         
@@ -182,9 +138,9 @@ async def chat_completions(request: ChatCompletionRequest):
                 "finish_reason": "stop"
             }],
             "usage": {
-                "prompt_tokens": sum(len(msg.content.split()) for msg in request.messages),
-                "completion_tokens": sum(len(msg.content.split()) for msg in response_content.messages),
-                "total_tokens": sum(len(msg.content.split()) for msg in request.messages) + sum(len(msg.content.split()) for msg in response_content.messages)
+                #"prompt_tokens": sum(len(msg.content.split()) for msg in request.messages),
+                #"completion_tokens": sum(len(msg.content.split()) for msg in response_content.messages),
+                #"total_tokens": sum(len(msg.content.split()) for msg in request.messages) + sum(len(msg.content.split()) for msg in response_content.messages)
             }
         }
         
@@ -202,7 +158,7 @@ async def chat_completions(request: ChatCompletionRequest):
         }
         return error_response
 
-async def stream_chat_completions(request: ChatCompletionRequest):
+async def stream_chat_completions(agent_wrapper: AgentManager, request: ChatCompletionRequest):
     """Handle streaming chat completions"""
     from fastapi.responses import StreamingResponse
     import json
@@ -229,8 +185,8 @@ async def stream_chat_completions(request: ChatCompletionRequest):
                 }]
             }
             yield f"data: {json.dumps(initial_chunk)}\n\n"
-            
-            async for chunk_content in autogen_wrapper.process_message_stream(request.messages[-1].content):
+
+            async for chunk_content in agent_wrapper.process_message_stream(request.messages[-1].content):
 
                 chunk = {
                     "id": completion_id,
@@ -296,10 +252,6 @@ async def stream_chat_completions(request: ChatCompletionRequest):
         }
     )
 
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
-
 if __name__ == "__main__":
     import uvicorn
     
@@ -316,108 +268,3 @@ if __name__ == "__main__":
         log_level="info",
         access_log=True
     )
-
-# # server.py
-# import json
-# import uuid, time
-# from fastapi import FastAPI
-# from fastapi.responses import StreamingResponse
-# from pydantic import BaseModel
-# import uvicorn
-# from agentic_nutrition_chatbot import AgentManager
-# from contextlib import asynccontextmanager
-# from custom_logger import logger
-
-# class ChatMessage(BaseModel):
-#     role: str
-#     content: str
-
-# class ChatRequest(BaseModel):
-#     model: str
-#     messages: list[ChatMessage]
-#     temperature: float = 0.7
-
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     # Startup code here
-#     app.state.agent_manager = await AgentManager.async_init()
-#     logger.info("🚀 Agentic system initialized and ready.")
-
-#     yield
-#     # Shutdown logic
-#     await app.state.agent_manager.shutdown()
-#     logger.info("🛑 Agentic system shutting down...")
-#     #sessions.clear()
-
-# app = FastAPI(lifespan=lifespan)
-
-# @app.get("/v1/models")
-# async def list_models():
-#     # Dummy list of models. 
-#     # Practically the wrapper name
-#     return {
-#         "object": "list",
-#         "data": [
-#             {
-#                 "id": "AI Agents Wrapper",
-#                 "object": "model",
-#                 "created": 0,
-#                 "owned_by": "local",
-#                 "permission": [],
-#             }
-#         ]
-#     }
-
-# @app.post("/v1/chat/completions")
-# async def chat_completions(request: ChatRequest):
-#     # Get the last user message from messages list
-#     user_input = next((m.content for m in reversed(request.messages) if m.role == "user"), "")
-    
-#     reply = await app.state.agent_manager.process_message(user_input)  # This may need to be async if your agent is async
-    
-#     #reply = "Walla Yofi" #run_agent(user_input)
-
-#     if request.stream:
-#         return StreamingResponse(stream_reply(reply, request.model), media_type="text/event-stream")
-#     else:
-#         return {
-#             "id": f"ai-engineering-{uuid.uuid4()}",
-#             "object": "chat.completion",
-#             "created": int(time.time()),
-#             "model": request.model,
-#             "choices": [{
-#                 "index": 0,
-#                 "message": {"role": "assistant", "content": reply},
-#                 "finish_reason": "stop"
-#             }],
-#             "usage": {
-#                 "prompt_tokens": len(user_input.split()),  # fake count
-#                 "completion_tokens": len(reply.split()),
-#                 "total_tokens": len(user_input.split()) + len(reply.split())
-#             }
-#         }
-    
-# def stream_reply(reply: str, model: str):
-#     # Simulate token-by-token output
-#     for token in reply.split():
-#         chunk = {
-#             "id": "chatcmpl-stream",
-#             "object": "chat.completion.chunk",
-#             "created": int(time.time()),
-#             "model": model,
-#             "choices": [{
-#                 "delta": {"content": token + " "},
-#                 "index": 0,
-#                 "finish_reason": None
-#             }]
-#         }
-#         yield f"data: {json.dumps(chunk)}\n\n"
-#         time.sleep(0.05)  # small delay for realism
-
-#     # Final message to signal end
-#     yield "data: [DONE]\n\n"
-
-# if __name__ == "__main__":
-#     #logger = setup_colored_logging()
-#     uvicorn.run(app, host="0.0.0.0", port=8000)
-

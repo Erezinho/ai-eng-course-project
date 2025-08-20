@@ -7,7 +7,7 @@ Assuming you completed all the steps below, have all required packacges etc, to 
 1. Run Docker Desktop, start 'open-webui' container (if not already running) 
 2. Run Ollama (if not already running)
 3. Start the wrapper_service.py from command line
-4. Navigate to http://localhost:8080/ and start chatting
+4. Navigate to http://localhost:8080/ (Open WebUI), select the model wrapper to work with and start chatting
 
 
 # 🛠️ Prerequisites
@@ -17,34 +17,35 @@ Yet, most of it should work for Windows out of the box, some may need small adju
 - Python: 3.13.5 ( + recommend to have a virtual environment)
 - Install all packages based on requirements.txt by running\
   `> pip install -r requirements.txt`
-- Install and run Docker Desktop (to run Open WebUI easily)
-- Install and run Ollama (to run and use local free models)
-- Install qwen3:30b model (18 GB, good reasoning model for Agentic work.. we may change the model later)\
-  `> ollama pull qwen3:30b`
+- Install and run __Docker__ Desktop (to run Open WebUI easily)
+- Install and run __Ollama__ (to run and use local free models)
+- Install qwen3:30b-a3b and gpt-oss:20b models (15 to 18 GB each, good for reasoning and Agentic work..)\
+  Example: 
+  `> ollama pull qwen3:30b`\
+  __Note__: You can use just one model. Make sure to select the right one from Open WebUI before starting to chat
 
 
 # 🧑‍💻 Local agents service
-This local service allows Open WebUI / Ollama UI to communicate with the agentic project as it was a model.
-It follows OpenAI's API schema
+This local service allows Open WebUI / Ollama UI to communicate with the agentic project as it was a model by wrapping it with a web service exposing OpenAI APIs schema.
 
 ## Start the local service
 `> python3 wrapper_service.py`
 
-You may start it also from Visual Studio Code (allows also debugging)
+You may start it also from Visual Studio Code (e.g. for debugging)
 
 ## Shutdown the local service
 `> CTRL+C`
 
 If you kill the service or just close the terminal, the port may remain in use 
 
-## Test the API
+## Check the API
 1. Open browser
 2. Navigate to http://localhost:8000/docs
 3. You will see the interactive Swagger UI.\
 Find the POST /v1/chat/completions endpoint, click "Try it out".\
 Fill in the request body, and click "Execute" to simulate an API call.
 
-Alternatively, you can use browser extensions like "REST Client" or "Postman", or use JavaScript in the browser console to send a fetch request. If you want a code example for that, let me know!
+Alternatively, you can use browser extensions like "REST Client" or "Postman", or use JavaScript in the browser console to send a request.
 
 
 # 🖥️ Open WebUI setup
@@ -77,16 +78,16 @@ http://localhost:8080/
 8. Test the connection by clicking the small refersh button on the right.
 Connection should succeed
 9. Save 
-10. Click the 'New Chat' on the left up corner
-10. Select our model, if not already selected ('AI Agents Wrapper')
+10. Click the 'New Chat' on the top left corner
+10. Select our model, if not already selected ('Agentic-System-...')
 11. Start chatting for a delicius meal 😋 🍲
 
 
 # 🗄️ MCP Server
-Our MCP Server is running locally as well i.e. using stdio transport
+Our MCP Server is running locally as well i.e. using STDIO transport
 It exposes the different tools (like meal-options) and used by the agentic system
 
-## Check mcp server using inspector tool (Optional)
+## Check the mcp server using inspector tool (Optional)
 1. Run the following command from command line (make sure you are in the correct path)
 `>npx @modelcontextprotocol/inspector python3 mcp_food_server.py`
 2. The browser should open automatically, navigating to a localhost mcp inspector service

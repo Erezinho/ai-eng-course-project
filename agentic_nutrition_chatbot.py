@@ -17,13 +17,19 @@ from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_ext.tools.mcp import StdioServerParams, mcp_server_tools
 from autogen_agentchat.ui import Console 
 from custom_logger import logger
+from enum import Enum
+
+class ModelName(str, Enum):
+    GPT_OSS_20B = "Agentic-System-gpt-oss:20b"
+    #QWEN3_30B = "Agentic-System-qwen3:30b"
+    QWEN3_30B_A3B = "Agentic-System-qwen3:30b-a3b"
 
 class AgentManager:
-    def __init__(self, mcp_tools: list[str] = None):
+    def __init__(self, model: ModelName, mcp_tools: list[str] = None):
         if mcp_tools is None:
             raise TypeError("mcp_tools is a required argument")
 
-        self.model_client = self.create_model_client()
+        self.model_client = self.create_model_client(model)
         logger.info(f"Using model client: {self.model_client.__class__.__name__}")
 
         self.end_term = "WallakAtaSoChen"  # Termination condition for the user input
@@ -36,11 +42,11 @@ class AgentManager:
                                         tools=mcp_tools,
                                         model_client_stream=True,  # Enable streaming responses
                                         reflect_on_tool_use=True,  # Enable reflection on tool use
-                                        system_message=f"""Your name is Assistant.
+                                        system_message=f"""Your name is 'Nutrition Assistant'.
                                         You are a helpful assistant that answers questions about Meals, Food and Nutrition only.
                                         You are supplied with few tools that you must use in order to answer the user's questions.
                                         Inform the user about the tools you have accessed.
-                                        When you have a suggestion for the user, output it as a bullet point.
+                                        When you have a suggestion for the user, output it in Markdown format.
 
                                         If you don't know the answer based on the tools, tell it to user, never generate an answer about
                                         Meals, Food and Nutrition without using the tools (i.e. do not invent answers not based on the tools).
@@ -71,34 +77,21 @@ class AgentManager:
         self.team = RoundRobinGroupChat([self.assistant], #, self.user_proxy],
                                         termination_condition=termination)
         logger.info("RoundRobin team created")
+
+        logger.info(f">>>>> Completed Initializing Agentic System using model: {model.value} <<<<<\n")
         
-        # Run the conversation and stream to the console.
-        #logger.info("Running the team...")
-        #stream = self.team.run_stream()#task="Welcome the user with nice 'Hello' and ask how you can assist")
-
-        #     print("*** Starting Console Stream")
-        #     print("\nType your queries or 'quit' to exit...")
-        #     await Console(stream)
-
-        # finally:
-        #     print("\n*** Closing the agents")        
-        #     await user_proxy.close()
-        #     await assistant.close()
-
-        #     print("\n*** Closing the model client\n\n")
-        #     await my_model_client.close()
-
-
     @classmethod
-    async def async_init(cls):
+    async def async_init(cls, model: ModelName):
         """Async Factory method that initializes the Agentic system by connecting to the MCP server,
            creating the agents and start them"""
-               
+
+        logger.info(f">>>>> Start Initializing Agentic System using model: {model.value} <<<<<")
+
         mcp_tools_with_autogen = await AgentManager.connect_to_servers()
 
         logger.info(f"Connected to MCP servers with tools: {[tool.name for tool in mcp_tools_with_autogen]}")
 
-        self = cls(mcp_tools_with_autogen)
+        self = cls(model=model, mcp_tools=mcp_tools_with_autogen)
                
         return self
 
@@ -156,32 +149,44 @@ class AgentManager:
             logger.error(f"Error in streaming: {e}")
             yield f"Error: {str(e)}"
 
-
     async def user_input_func(self, prompt: str, cancellation_token: CancellationToken | None) -> str:
         logger.info(f"User input requested with prompt: {prompt}")
         return "continue"  # Simulate user input for now, replace with actual input logic
 
- 
-    def create_model_client(self) -> ChatCompletionClient:
+    def create_model_client(self, model: ModelName) -> ChatCompletionClient:
         """Create the agent(s) - for now, let's use a local reasoning models """
 
+        model_client = None
         #load_dotenv() 
         #openai_model_client = OpenAIChatCompletionClient(model="gpt-4-turbo") #, api_key=OPENAI_API_KEY) # 
-        local_ollama_openai_model_client = OllamaChatCompletionClient(model="gpt-oss:20b", 
-                                                                      model_info={"description": "Local Ollama GPT-OSS 20B model",
-                                                                                  "vision": False,
-                                                                                  "function_calling": True,
+        #model_client=openai_model_client 
+
+        if model == ModelName.GPT_OSS_20B:
+            local_ollama_openai_model_client = OllamaChatCompletionClient(model="gpt-oss:20b", 
+                                                                          model_info={"description": "Local Ollama GPT-OSS 20B model",
+                                                                                      "vision": False,
+                                                                                      "function_calling": True,
                                                                                   "json_output": True,
                                                                                   "family": ModelFamily.GPT_5,
                                                                                   "structured_output": True,
                                                                                   "reasoning_mode": "high"}
-                                                                      ) # local - add model_info ?
-        # For oss ?? model_client = ChatCompletionClient.load_component(model_config)
-        #local_ollama_qwen_model_client = OllamaChatCompletionClient(model="qwen3:30b-a3b") # local
+                                                                      ) 
+            model_client=local_ollama_openai_model_client
 
-        #model_client=openai_model_client 
-        model_client=local_ollama_openai_model_client
-        #model_client=local_ollama_qwen_model_client
+        elif model == ModelName.QWEN3_30B_A3B:
+            local_ollama_qwen_model_client = OllamaChatCompletionClient(model="qwen3:30b-a3b") # local
+            model_client=local_ollama_qwen_model_client
+
+        # local_ollama_qwen_model_client = OllamaChatCompletionClient(model="qwen3:30b", 
+        #                                                             model_info={"description": "Local Ollama QWEN 30B model",
+        #                                                                         "vision": False,
+        #                                                                         "function_calling": True,
+        #                                                                         "json_output": True,
+        #                                                                         "family": ModelFamily.UNKNOWN,
+        #                                                                         "structured_output": True
+        #                                                                         }
+        #                                                               )
+        # model_client=local_ollama_qwen_model_client
 
         return model_client
 
@@ -216,7 +221,5 @@ class AgentManager:
 
         return the_tools
 
-#if __name__ == "__main__":
-#     asyncio.run(AgentManager.async_init())
 if __name__ == "__main__":
     agent_manager = asyncio.run(AgentManager.async_init())
