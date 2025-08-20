@@ -1,0 +1,34 @@
+[
+  {
+    "name": "(Db) Grilled Chicken Salad",
+    "nutrition": { "calories": 450, "protein": 55, "fat": 20, "carbs": 10 }
+  },
+  {
+    "name": "(Db) Lentil Soup",
+    "nutrition": { "calories": 350, "protein": 20, "fat": 10, "carbs": 45 }
+  },
+  {
+    "name": "(Db) Salmon with Quinoa",
+    "nutrition": { "calories": 650, "protein": 58, "fat": 35, "carbs": 30 }
+  },
+  {
+    "name": "(Db) Tofu Stir-fry",
+    "nutrition": { "calories": 400, "protein": 25, "fat": 20, "carbs": 30 }
+  },
+  {
+    "name": "(Db) Steak with Roasted Veggies",
+    "nutrition": { "calories": 800, "protein": 60, "fat": 40, "carbs": 50 }
+  },
+  {
+    "name": "(Db) Greek Yogurt with Berries",
+    "nutrition": { "calories": 300, "protein": 30, "fat": 10, "carbs": 25 }
+  },
+  {
+    "name": "(Db) Protein Shake",
+    "nutrition": { "calories": 250, "protein": 40, "fat": 5, "carbs": 10 }
+  },
+  {
+    "name": "(Db) Omelette with Spinach",
+    "nutrition": { "calories": 350, "protein": 28, "fat": 22, "carbs": 5 }
+  }
+]
