@@ -20,6 +20,7 @@ from autogen_agentchat.ui import Console
 from markdown_streamer import MarkdownStreamer
 from custom_logger import logger
 from enum import Enum
+import textwrap
 
 class ModelName(str, Enum):
     GPT_OSS_20B = "Agentic-System-gpt-oss:20b"
@@ -41,12 +42,7 @@ class AgentManager:
 
         # try:
         # Assistant Agent
-        self.assistant = AssistantAgent(name="assistant",
-                                        model_client=self.model_client,
-                                        tools=mcp_tools,
-                                        model_client_stream=True,  # Enable streaming responses
-                                        reflect_on_tool_use=True,  # Enable reflection on tool use
-                                        system_message=f"""Your name is 'Nutrition Assistant'.
+        system_message_template=textwrap.dedent(f"""Your name is 'Nutrition Assistant'.
                                         You are a helpful assistant that answers questions about Meals, Food and Nutrition only.
                                         You are supplied with few tools that you must use in order to answer the user's questions.
                                         Inform the user about the tools you have accessed.
@@ -64,6 +60,13 @@ class AgentManager:
                                         return your thinking but in one block of text, do NOT output it token by token."""
                                         #/no_think"""
         )
+
+        self.assistant = AssistantAgent(name="assistant",
+                                        model_client=self.model_client,
+                                        tools=mcp_tools,
+                                        model_client_stream=True,  # Enable streaming responses
+                                        reflect_on_tool_use=True,  # Enable reflection on tool use
+                                        system_message=system_message_template)
         logger.info("AssistantAgent created")
 
         # User Proxy Agent
@@ -74,6 +77,7 @@ class AgentManager:
         
 
         # Termination condition which will end the conversation when the user says "quit".
+        # May need also to limit number of iterations... 
         termination = TextMentionTermination(f"{self.end_term}")
         logger.info("TextMentionTermination condition created")
     

@@ -65,7 +65,8 @@ def setup_colored_logging():
         logger.removeHandler(handler)
     
     # Create console handler
-    console_handler = logging.StreamHandler(sys.stdout)
+    #logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+    console_handler = logging.StreamHandler(sys.stderr)
     # Control the log level for the console handler (the most restrictive level between the logger and the handler wins).
     console_handler.setLevel(log_level)
     

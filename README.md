@@ -6,7 +6,7 @@ AI Engineering course of The hebrew University of Jerusalem - final project
 Assuming you completed all the steps below, have all required packacges etc, to strat the project:
 1. Run Docker Desktop, start 'open-webui' container (if not already running) 
 2. Run Ollama (if not already running)
-3. Start the wrapper_service.py from command line
+3. Start the nutrition_service.py from command line
 4. Navigate to http://localhost:8080/ (Open WebUI), select the model wrapper to work with and start chatting
 
 
@@ -29,7 +29,7 @@ Yet, most of it should work for Windows out of the box, some may need small adju
 This local service allows Open WebUI / Ollama UI to communicate with the agentic project as it was a model by wrapping it with a web service exposing OpenAI APIs schema.
 
 ## Start the local service
-`> python3 wrapper_service.py`
+`> python3 nutrition_service.py`
 
 You may start it also from Visual Studio Code (e.g. for debugging)
 
