@@ -261,7 +261,7 @@ class AgentManager:
                 logger.debug(f"Connecting to MCP server: '{server_name}' with config: {server_config}")
 
                 # Can be done using async method
-                mcp_server_with_autogen = StdioServerParams(**server_config)
+                mcp_server_with_autogen = StdioServerParams(**server_config, read_timeout_seconds=30)
                 mcp_tools_with_autogen = await mcp_server_tools(mcp_server_with_autogen)
                 logger.debug(f"Connected to MCP server '{server_name}', Available tools: {[tool.name for tool in mcp_tools_with_autogen]}")
 
