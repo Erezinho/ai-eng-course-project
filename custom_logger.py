@@ -51,24 +51,25 @@ class ColoredFormatter(logging.Formatter):
         return log_message
 
 # Example usage and setup
-def setup_colored_logging():
+def setup_custom_logger():
     """Setup logging with colored formatter"""
-    log_level = logging.INFO
+    log_level = logging.INFO #logging.INFO #logging.WARNING #logging.DEBUG Change the desired log level here
 
     # Create logger
     logger = logging.getLogger()
     # Set the log level the logger emits to all handlers
-    logger.setLevel(log_level) #logging.WARNING #logging.DEBUG Change the desired log level here
+    logger.setLevel(log_level) 
 
     # Remove existing handlers to avoid duplicates
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
     
     # Create console handler
-    console_handler = logging.StreamHandler(sys.stdout)
+    #logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+    console_handler = logging.StreamHandler(sys.stderr)
     # Control the log level for the console handler (the most restrictive level between the logger and the handler wins).
     console_handler.setLevel(log_level)
-    
+
     # Create and set custom formatter
     formatter = ColoredFormatter()
     console_handler.setFormatter(formatter)
@@ -76,6 +77,26 @@ def setup_colored_logging():
     # Add handler to logger
     logger.addHandler(console_handler)
     
+    # Configure AutoGen-specific loggers to use WARNING level
+    autogen_modules = [
+        'autogen',
+        'autogen_core',
+        'autogen_agentchat', 
+        'autogen_ext',
+        'autogen_agentchat.agents',
+        'autogen_agentchat.teams',
+        'autogen_agentchat.conditions',
+        'autogen_ext.models',
+        'autogen_ext.models.ollama',
+        'autogen_ext.tools',
+        'autogen_ext.tools.mcp'
+    ]
+    
+    for module_name in autogen_modules:
+        autogen_logger = logging.getLogger(module_name)
+        autogen_logger.setLevel(logging.WARNING)
+        # Don't add handlers here since they inherit from root logger
+    
     return logger
 
-logger = setup_colored_logging()
+logger = setup_custom_logger()

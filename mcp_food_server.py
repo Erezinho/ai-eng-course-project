@@ -4,6 +4,7 @@ import os
 from typing import List
 from mcp.server.fastmcp import FastMCP
 from custom_logger import logger
+from search_engine import HybridSearch
 
 DB_DIRECTORY = "local_db"
 
@@ -11,6 +12,9 @@ logger.info(f"Starting MCP Food Server. Using DB_DIRECTORY: {DB_DIRECTORY}")
 
 # Initialize FastMCP server
 mcp = FastMCP("food-server")
+
+# Initialize HybridSearch
+hybrid_search = HybridSearch()
 
 @mcp.tool()
 def help() -> str:
@@ -27,9 +31,26 @@ def help() -> str:
     )
 
 @mcp.tool()
-def get_meal_options(calorie_limit: int, protein_goal: int, num_options: int = 3) -> List[dict]:
+def get_meal_options(query: str, intermediate_results: int = 4, final_results: int = 2) -> List[str]:
     """
-    Filters recipes from the database based on nutritional constraints.
+    Uses the search engine class to get most relevant meals base on the query.
+    The search is performed using both BM25 and vector similarity with cross-encoding for reranking.
+
+    Args:
+        query (str): The prompt text for the meal search.
+        intermediate_results (int): The number of intermediate results to consider by hybrid search.
+        final_results (int): The number of final results to return after cross-encoding.
+
+    Returns:
+        A list of strings. Each string represents a meal option with all nutritional information.
+    """
+    return hybrid_search.invoke(query, intermediate_results, final_results)
+
+#@mcp.tool()
+def get_meal_options_naive(calorie_limit: int, protein_goal: int, num_options: int = 3) -> List[dict]:
+    """
+    Naively filters recipes from ta json database based on nutritional constraints (as a POC).
+    
     """
     json_file_path = os.path.join(DB_DIRECTORY, "recipes.json")
     with open(json_file_path, "r") as f:
