@@ -1,6 +1,7 @@
 # 🎓 ai-eng-course-project 
 AI Engineering course of The hebrew University of Jerusalem - final project
 
+See general architecture diagram below
 
 # 🚀 Quick Start
 Assuming you completed all the steps below, have all required packacges etc, to strat the project:
@@ -95,5 +96,15 @@ It exposes the different tools (like meal-options) and used by the agentic syste
 4. If all is good, you can click the 'Tools' icon on the top barto see the tools exposed by our mcp server
 5. Make sure to properly shut down the server when done with `CTRL+C` from command line
 
+
 # ⏭️ What's Next
-?
+Forward steps can be taken, for example:
+1. Generate an image for suggested meal using text to image model (need to find local yet good and fast model)
+2. Manage a pool of agents
+3. Save an load chat history so new chat can start fresh while going back to old chat will be available
+4. Other ideas...
+
+
+# 🏗️ Architecture Overview
+
+![System Architecture](Presentation/Architecture-white.png)
