@@ -1,7 +1,7 @@
 # 🎓 ai-eng-course-project 
 AI Engineering course of The hebrew University of Jerusalem - final project
 
-See general architecture diagram below
+Architecture overview can be found at the end of this file
 
 # 🚀 Quick Start
 Assuming you completed all the steps below, have all required packacges etc, to strat the project:
